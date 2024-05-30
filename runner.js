@@ -95,7 +95,11 @@ class RunScene extends Phaser.Scene{
         this.physics.add.collider(this.bombs, this.platforms);
         this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
         this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this);
+        /*--------------- controls and cameras --------------*/
         this.cursors = this.input.keyboard.createCursorKeys();
+        this.cameras.main.startFollow(this.player);
+        this.cameras.main.setLerp(1,0);
+
 
         const goTo1 = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
         goTo1.setInteractive();
@@ -105,7 +109,7 @@ class RunScene extends Phaser.Scene{
 
         this.coins = []; //Create them as an array and add/rm members
         this.money = this.registry.get("money");
-        this.moneyText = this.add.text(16, 16, '$$: 0', { fontSize: '32px', fill: '#000' });
+        this.moneyText = this.add.text(16, 16, '$$: '+this.money, { fontSize: '32px', fill: '#000' });
     }
     update(){
         if (this.cursors.left.isDown){
@@ -125,7 +129,8 @@ class RunScene extends Phaser.Scene{
         }
     }
     collectStar(player, star){
-        star.disableBody(true, true);
+        //star.disableBody(true, true);
+        star.destroy()
         this.money += 1;
         this.moneyText.setText('$$: ' + this.money);
     }
@@ -137,7 +142,7 @@ class RunScene extends Phaser.Scene{
     }
     gameOver(){
         this.registry.set("money", this.money);
-        this.time.delayedCall(2000, () => this.scene.start('GameOverScene'));
+        this.time.delayedCall(2000, () => this.scene.start('GameOverScene')); //After 2s, go to GameOver screen
     }
 }
 
@@ -152,6 +157,7 @@ class GameOverScene extends Phaser.Scene{
         goTo1.on('pointerdown', () => {
           this.scene.start('MainMenuScene');
         });
+        this.summaryText = this.add.text(200, 200, 'Good run\nYou have $'+this.registry.get("money"), { fontSize: '32px', fill: '#000' });
     }
 }
 
