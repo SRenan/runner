@@ -1,8 +1,3 @@
-/* -------------- Basic endless runner -------------
-Character is fixed
-Obstacles have negative velocity
---------------------------------------------------*/
-
 class PreloadScene extends Phaser.Scene{
     //Preload everything then automatically transition to the MainMenuScene
     constructor(){
@@ -19,10 +14,8 @@ class PreloadScene extends Phaser.Scene{
         );
     }
     create(){
-        //Check whether we have a previous run (This should likely wrapped into one big variable if there is more to save)
-        this.money = parseInt(localStorage.getItem('money')) || 0
         //The registry allows passing data between scenes
-        this.registry.set("money", this.money);
+        this.registry.set("money", 0);
         this.scene.transition({
             target: 'MainMenuScene'
         });
@@ -41,11 +34,6 @@ class MainMenuScene extends Phaser.Scene{
       goTo2.on('pointerdown', () => {
         this.scene.start('RunScene');
       });
-      const goToGarage = this.add.text(100, 200, 'Garage', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}});
-      goToGarage.setInteractive();
-      goToGarage.on('pointerdown', () => {
-        this.scene.start('GarageScene');
-      });
     }
     update(){
     }
@@ -53,16 +41,17 @@ class MainMenuScene extends Phaser.Scene{
 class RunScene extends Phaser.Scene{
     constructor(){
         super('RunScene');
-        this.timer = 0;
     }
     preload(){}
     create(){
         this.add.image(400, 300, 'sky');
 
         //"this" required for every variable in the class
-        this.ground = this.physics.add.staticGroup();
-        this.ground.create(400, 568, 'ground').setScale(2).refreshBody();
-        this.platforms = this.physics.add.group({immovable: true, allowGravity: false});
+        this.platforms = this.physics.add.staticGroup();
+        this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+        this.platforms.create(600, 400, 'ground');
+        this.platforms.create(50, 250, 'ground');
+        this.platforms.create(750, 220, 'ground');
 
         this.player = this.physics.add.sprite(100, 450, 'dude');
         this.player.setBounce(0.2);
@@ -92,7 +81,6 @@ class RunScene extends Phaser.Scene{
         });
         this.stars.children.iterate(function (child) {
             child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-            child.setVelocityX(-100);
         });
 
         this.bombs = this.physics.add.group();
@@ -102,12 +90,9 @@ class RunScene extends Phaser.Scene{
         this.bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
 
         /*-------------------- colliders --------------------*/
-        this.physics.add.collider(this.player, this.ground);
-        this.physics.add.collider(this.stars,  this.ground);
-        this.physics.add.collider(this.bombs,  this.ground);
         this.physics.add.collider(this.player, this.platforms);
-        this.physics.add.collider(this.stars,  this.platforms);
-        this.physics.add.collider(this.bombs,  this.platforms);
+        this.physics.add.collider(this.stars, this.platforms);
+        this.physics.add.collider(this.bombs, this.platforms);
         this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this);
         this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this);
         /*--------------- controls and cameras --------------*/
@@ -115,10 +100,10 @@ class RunScene extends Phaser.Scene{
         this.cameras.main.startFollow(this.player);
         this.cameras.main.setLerp(1,0);
 
-        /*-------------------- Interface ----- --------------*/
-        const goToMenu = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
-        goToMenu.setInteractive();
-        goToMenu.on('pointerdown', () => {
+
+        const goTo1 = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
+        goTo1.setInteractive();
+        goTo1.on('pointerdown', () => {
           this.scene.start('MainMenuScene');
         });
 
@@ -128,26 +113,22 @@ class RunScene extends Phaser.Scene{
         this.testText = this.add.text(400, 300, 'TEXT', { fontSize: '32px', fill: '#000' });
         this.moneyText.setScrollFactor(0);
     }
-    update(time, delta){
-        this.player.anims.play('right', true);
+    update(){
+        if (this.cursors.left.isDown){
+            this.player.setVelocityX(-160);
+            this.player.anims.play('left', true);
+        }
+        else if (this.cursors.right.isDown){
+            this.player.setVelocityX(160);
+            this.player.anims.play('right', true);
+        }
+        else{
+            this.player.setVelocityX(0);
+            this.player.anims.play('turn');
+        }
         if (this.cursors.up.isDown && this.player.body.touching.down){
             this.player.setVelocityY(-330);
         }
-        this.timer += delta;
-        if(this.timer >= 3000){
-            this.createBomb();
-            this.createPlatform();
-            this.timer = 0;
-        }
-    }
-    createBomb(){
-        const bomb = this.bombs.create(600, 300, 'bomb');
-        bomb.setVelocityX(-100);
-    }
-    createPlatform(){
-        const randY = Phaser.Math.Between(20, 50)*10;
-        const platform = this.platforms.create(600, randY, 'ground');
-        platform.setVelocityX(-100);
     }
     collectStar(player, star){
         //star.disableBody(true, true);
@@ -164,33 +145,18 @@ class RunScene extends Phaser.Scene{
     gameOver(){
         this.registry.set("money", this.money);
         this.time.delayedCall(2000, () => this.scene.start('GameOverScene')); //After 2s, go to GameOver screen
-        localStorage.setItem('money', this.money);
     }
 }
 
-class GarageScene extends Phaser.Scene{
-    constructor(){
-        super('GarageScene');
-    }
-    create(){
-        const goToMenu = this.add.text(600, 0, 'Go to Menu', { fill: '#2e2d8c' });
-        goToMenu.setInteractive();
-        goToMenu.on('pointerdown', () => {
-          this.scene.start('MainMenuScene');
-        });
-        this.money = this.registry.get("money");
-        this.moneyText = this.add.text(16, 16, '$$: '+this.money, { fontSize: '32px', fill: '#000' });
-    }
-}
 class GameOverScene extends Phaser.Scene{
     //Summary of run and return to MainMenuScene
     constructor(){
         super('GameOverScene');
     }
     create(){
-        const goToMenu = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
-        goToMenu.setInteractive();
-        goToMenu.on('pointerdown', () => {
+        const goTo1 = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
+        goTo1.setInteractive();
+        goTo1.on('pointerdown', () => {
           this.scene.start('MainMenuScene');
         });
         this.summaryText = this.add.text(200, 200, 'Good run\nYou have $'+this.registry.get("money"), { fontSize: '32px', fill: '#000' });
@@ -209,7 +175,7 @@ var config = {
             debug: false
         }
     },
-    scene: [PreloadScene, MainMenuScene, RunScene, GarageScene, GameOverScene]
+    scene: [PreloadScene, MainMenuScene, RunScene, GameOverScene]
 };
 
 var game = new Phaser.Game(config);
