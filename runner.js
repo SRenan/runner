@@ -8,8 +8,10 @@ class PreloadScene extends Phaser.Scene{
         super('PreloadScene');
     }
     preload(){
+        this.load.audio('testBeep', 'assets/beep.ogg');
+
         this.load.image('sky', 'assets/sky.png');
-        this.load.image("sky2", "assets/sky2.png");
+        this.load.image('sky2', "assets/sky2.png");
         this.load.image('ground', 'assets/platform.png');
         this.load.image('star', 'assets/star.png');
         this.load.image('bomb', 'assets/bomb.png');
@@ -23,6 +25,9 @@ class PreloadScene extends Phaser.Scene{
         );
         this.load.image('dude1', 'assets/star.png');
         this.load.image('dude2', 'assets/bomb.png');
+
+        this.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
+
     }
     create(){
         //Check whether we have a previous run (This should likely wrapped into one big variable if there is more to save)
@@ -53,6 +58,11 @@ class MainMenuScene extends Phaser.Scene{
       goToGarage.on('pointerdown', () => {
         this.scene.start('GarageScene');
       });
+      const goToSettings = this.add.text(100, 300, 'Settings', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}});
+      goToSettings.setInteractive();
+      goToSettings.on('pointerdown', () => {
+        this.scene.start('SettingsScene');
+      });
     }
     update(){
     }
@@ -77,9 +87,41 @@ class SettingsScene extends Phaser.Scene{
     constructor(){
         super('SettingsScene');
     }
+    preload(){
+        this.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
+    }
     create(){
-        const volumeSlider = this.rexUI.add.slider({
+        this.volumeTestSound = this.sound.add('testBeep'); 
+
+        const goToMenu = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
+        goToMenu.setInteractive();
+        goToMenu.on('pointerdown', () => {
+          this.scene.start('MainMenuScene');
         });
+        const COLOR_PRIMARY = 0x4e342e;
+        const COLOR_LIGHT = 0x7b5e57;
+        const COLOR_DARK = 0x260e04;
+
+        this.volumeText = this.add.text(400, 200, 'Volume: '+config.settings.volume*100, { fill: '#2e2d8c' });
+        var volumeSlider = this.rexUI.add.slider({
+          x: 200,
+          y: 200,
+          width: 200,
+          height: 20,
+          value: config.settings.volume,
+          track: this.rexUI.add.roundRectangle(0, 0, 0, 0, 6, COLOR_DARK),
+          thumb: this.rexUI.add.roundRectangle(0, 0, 0, 0, 10, COLOR_LIGHT),
+          valuechangeCallback: (value) => {
+              config.settings.volume = value;
+              this.volumeTestSound.play({volume: config.settings.volume});
+          },
+          gap: 0.05,
+          space: { top: 4, bottom: 4 },
+          input: 'drag', // 'drag'|'click'
+        }).layout();
+    }
+    update(){
+        this.volumeText.setText('Volume: ' + Phaser.Math.RoundTo(config.settings.volume*100, 0));
     }
 }
 
@@ -297,7 +339,7 @@ var config = {
         }
     },
     settings: {
-      volume: 1
+      volume: .75
     },
     scene: [PreloadScene, MainMenuScene, SettingsScene, HUDScene, RunScene, GarageScene, GameOverScene]
 };
