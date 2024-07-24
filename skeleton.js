@@ -17,18 +17,19 @@ class MainMenuScene extends Phaser.Scene{
     }
     preload(){}
     create(){
-      const goTo2 = this.add.text(100, 100, 'Run', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}});
+      const goTo2 = this.add.text(100, 100, 'Game', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}});
       goTo2.setInteractive();
       goTo2.on('pointerdown', () => {
-        this.scene.start('RunScene');
+        this.scene.start('GameScene');
       });
     }
     update(){
     }
 }
-class RunScene extends Phaser.Scene{
+
+class GameScene extends Phaser.Scene{
     constructor(){
-        super('RunScene');
+        super('GameScene');
     }
     preload(){}
     create(){
@@ -38,7 +39,7 @@ class RunScene extends Phaser.Scene{
 }
 
 class GameOverScene extends Phaser.Scene{
-    //Summary of run and return to MainMenuScene
+    //Summary of game and return to MainMenuScene
     constructor(){
         super('GameOverScene');
     }
@@ -63,7 +64,7 @@ var config = {
             debug: false
         }
     },
-    scene: [PreloadScene, MainMenuScene, RunScene, GameOverScene]
+    scene: [PreloadScene, MainMenuScene, GameScene, GameOverScene]
 };
 
 var game = new Phaser.Game(config);
