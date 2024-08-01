@@ -108,6 +108,7 @@ class GameScene extends Phaser.Scene{
       this.bg = this.add.image(400, 300, 'pigs_game_bg');
 
       /*------------- Game area ---------------*/
+      this.turn_count = 0;
       this.turn_total = 0;
       this.total_text = this.add.text(50, 100, 'Current total: '+this.turn_total, { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:20, y:20}});
 
@@ -119,26 +120,43 @@ class GameScene extends Phaser.Scene{
       });
       const endTurnButton = this.add.text(game.config.width/2, game.config.height/2+270, 'End turn', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:20, y:20}}).setOrigin(0.5, 0.5);
       endTurnButton.setInteractive();
-      endTurnButton.on('pointerdown', () => { this.scene.start('MainMenuScene');});
+      endTurnButton.on('pointerdown', () => {
+         this.endTurn();
+      });
+
+
+      this.current_player = 0;
 
       /*------------- Side panel --------------*/
       const gameUIpanel = this.add.rectangle(game.config.width-100, game.config.height/2, 200, game.config.height, 0xff0000, 0.5);
       // For each player
       this.players = [];
+      this.player_scores = [];
+      this.player_scores_text = [];
       const nplayers = 2;
       for (var i = 0; i < nplayers; i++){
         this.player_id = i+1
         this.players.push(this.add.text(0, 0, 'Player '+this.player_id));
+        this.player_scores.push(0);
+        this.player_scores_text.push(this.add.text(0, 0, 'Total: '+0));
       }
       Phaser.Actions.GridAlign(this.players, {
             width: 1,
             height: nplayers,
             cellWidth: 50,
             cellHeight: 50,
-            x: game.config.width-150,
+            x: game.config.width-200,
             y: 80
       });
-      this.setActivePlayer(0);
+      Phaser.Actions.GridAlign(this.player_scores_text, {
+            width: 1,
+            height: nplayers,
+            cellWidth: 50,
+            cellHeight: 50,
+            x: game.config.width-100,
+            y: 80
+      });
+      this.setActivePlayer(this.current_player);
       // Player name - highlighted if it's their turn
       // Player score
       const exitButton = this.add.text(game.config.width-100, game.config.height-100, 'Exit', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
@@ -150,7 +168,7 @@ class GameScene extends Phaser.Scene{
       goToSettings.on('pointerdown', () => { this.scene.start('SettingsScene'); });
     }
     update(){
-      if(this.turn_total >= 100){
+      if(this.player_scores[this.current_player] >= 100){
         gameOver();
       }
     }
@@ -162,19 +180,26 @@ class GameScene extends Phaser.Scene{
       this.main_dice.setTexture(this.dice_key);
       if(this.dice_value == 1){
         this.turn_total = 0;
+         this.endTurn();
       } else{
         this.turn_total += this.dice_value;
       }
       this.total_text.setText('Current total: '+this.turn_total);
     }
     setActivePlayer(player_id){
-      console.log(player_id);
       this.players.forEach((item, index) => {this.players[index].setBackgroundColor("#C70039");});
       this.players[player_id].setBackgroundColor("#000000");
     }
     endTurn(){
       //Add turn_total to player_total
+      this.player_scores[this.current_player] += this.turn_total;
+      this.player_scores_text[this.current_player].setText('Total '+this.player_scores[this.current_player]);
+      this.turn_total = 0;
+      this.total_text.setText('Current total: '+0);
       //Set active player to next player
+      this.current_player = (this.current_player+1) % this.players.length;
+      console.log('newpid= '+this.current_player);
+      this.setActivePlayer(this.current_player);
     }
 }
 
