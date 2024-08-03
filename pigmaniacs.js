@@ -166,11 +166,14 @@ class GameScene extends Phaser.Scene{
       const goToSettings = this.add.text(game.config.width-100, game.config.height-150, 'Settings', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
       goToSettings.setInteractive();
       goToSettings.on('pointerdown', () => { this.scene.start('SettingsScene'); });
+      
+      /*------------- Game objects --------------*/
+      this.target_score = 100;
     }
     update(){
-      if(this.player_scores[this.current_player] >= 100){
-        gameOver();
-      }
+      // Update scores
+      this.total_text.setText('Current total: '+this.turn_total);
+      this.player_scores_text[this.current_player].setText('Total '+this.player_scores[this.current_player]);
     }
 
     // Other methods
@@ -194,12 +197,21 @@ class GameScene extends Phaser.Scene{
       //Add turn_total to player_total
       this.player_scores[this.current_player] += this.turn_total;
       this.player_scores_text[this.current_player].setText('Total '+this.player_scores[this.current_player]);
+      //Check for gameOver
+      console.log(this.player_scores[this.current_player]);
+      if(this.player_scores[this.current_player] >= this.target_score){
+        this.gameOver(this.current_player);
+      } 
       this.turn_total = 0;
       this.total_text.setText('Current total: '+0);
       //Set active player to next player
       this.current_player = (this.current_player+1) % this.players.length;
-      console.log('newpid= '+this.current_player);
       this.setActivePlayer(this.current_player);
+    }
+    gameOver(player_id){
+      //Maybe push a scene that is half the screen to the front
+      //Congrats text + summary
+      this.scene.start('GameOverScene');
     }
 }
 
@@ -214,6 +226,8 @@ class GameOverScene extends Phaser.Scene{
         goTo1.on('pointerdown', () => {
           this.scene.start('MainMenuScene');
         });
+
+        this.add.text(game.config.width/2, game.config.height/2-200, 'Con-gra-tu-layyyytion!').setOrigin(0.5, 0.5);
     }
 }
 
