@@ -41,7 +41,7 @@ class MainMenuScene extends Phaser.Scene{
       const goTo2 = this.add.text(game.config.width/2, 200, 'Game', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
       goTo2.setInteractive();
       goTo2.on('pointerdown', () => {
-        this.scene.start('GameScene');
+        this.scene.start('PreGameScene');
       });
       const goToSettings = this.add.text(game.config.width/2, 300, 'Settings', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
       goToSettings.setInteractive();
@@ -98,6 +98,64 @@ class SettingsScene extends Phaser.Scene{
         this.volumeText.setText('Volume: ' + Phaser.Math.RoundTo(config.settings.volume*100, 0));
     }   
 }
+class PreGameScene extends Phaser.Scene{
+  constructor(){
+      super('PreGameScene');
+  }   
+  preload(){
+    this.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
+  }   
+  create(){
+    this.rulesText = "RULES:\n" +
+                     "Welcome to a game of pig. The goal is to be the first to reach the target score.\n" +
+                     "On each player turn, points are earned by rolling a die and summing the total.\n" +
+                     "If a 1 is rolled, the total points for that turn is reset to 0 and it becomes the \n" +
+                     "next player's turn. A player can choose to end their turn in order to preserve \n"+
+                     "their current points and add it to their total.";
+    this.add.text(10, 10, this.rulesText)
+    /*------------------- Settings---------------*/
+    this.add.text(game.config.width/2, 200, 'Player count:').setOrigin(0.5, 0.5);
+    this.player_count = gameSettings.playerCount;
+    const UP_PLAYER_COUNT = this.add.text(game.config.width/2+100, 200, '+', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+    UP_PLAYER_COUNT.setInteractive();
+    UP_PLAYER_COUNT.on('pointerdown', () => {this.player_count = this.player_count +1;});
+    const DOWN_PLAYER_COUNT = this.add.text(game.config.width/2+120, 200, '-', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+    DOWN_PLAYER_COUNT.setInteractive();
+    DOWN_PLAYER_COUNT.on('pointerdown', () => {
+      if(this.player_count > 1){
+        this.player_count = this.player_count -1;
+      }
+    });
+    this.playerCountText = this.add.text(game.config.width/2+150, 200, this.player_count).setOrigin(0.5, 0.5);
+
+    this.target_score = gameSettings.targetScore;
+    this.add.text(game.config.width/2, 250, 'Target score:').setOrigin(0.5, 0.5);
+    this.player_count = gameSettings.playerCount;
+    const UP_TARGET_SCORE = this.add.text(game.config.width/2+100, 250, '+', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+    UP_TARGET_SCORE.setInteractive();
+    UP_TARGET_SCORE.on('pointerdown', () => {this.target_score = this.target_score +10;});
+    const DOWN_TARGET_SCORE = this.add.text(game.config.width/2+120, 250, '-', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+    DOWN_TARGET_SCORE.setInteractive();
+    DOWN_TARGET_SCORE.on('pointerdown', () => {
+      if(this.target_score > 20){
+        this.target_score = this.target_score -10;
+      }
+    });
+    this.targetScoreText = this.add.text(game.config.width/2+150, 250, this.target_score).setOrigin(0.5, 0.5);
+    const GOTO_GAME = this.add.text(game.config.width/2, 400, 'Start!', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+    GOTO_GAME.setInteractive();
+    GOTO_GAME.on('pointerdown', () => {
+      this.scene.start('GameScene');
+    });
+  }
+  update(){
+    //Should I remove this and modify gameSettings directly in create?
+    gameSettings.playerCount = this.player_count;
+    gameSettings.targetScore = this.target_score;
+    this.playerCountText.setText(gameSettings.playerCount);
+    this.targetScoreText.setText(gameSettings.targetScore);
+  }
+}
 class GameScene extends Phaser.Scene{
     constructor(){
         super('GameScene');
@@ -129,12 +187,13 @@ class GameScene extends Phaser.Scene{
 
       /*------------- Side panel --------------*/
       const gameUIpanel = this.add.rectangle(game.config.width-100, game.config.height/2, 200, game.config.height, 0xff0000, 0.5);
+      const targetTextBox = this.add.rectangle(game.config.width-100, 30, 190, 50, 0x0000ff);
+      const targetText = this.add.text(game.config.width-100, 25, 'Target score: '+gameSettings.targetScore).setOrigin(0.5,0.5);//, { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:15}});
       // For each player
       this.players = [];
       this.player_scores = [];
       this.player_scores_text = [];
-      const nplayers = 2;
-      for (var i = 0; i < nplayers; i++){
+      for (var i = 0; i < gameSettings.playerCount; i++){
         this.player_id = i+1
         this.players.push(this.add.text(0, 0, 'Player '+this.player_id));
         this.player_scores.push(0);
@@ -142,7 +201,7 @@ class GameScene extends Phaser.Scene{
       }
       Phaser.Actions.GridAlign(this.players, {
             width: 1,
-            height: nplayers,
+            height: gameSettings.playerCount,
             cellWidth: 50,
             cellHeight: 50,
             x: game.config.width-200,
@@ -150,7 +209,7 @@ class GameScene extends Phaser.Scene{
       });
       Phaser.Actions.GridAlign(this.player_scores_text, {
             width: 1,
-            height: nplayers,
+            height: gameSettings.playerCount,
             cellWidth: 50,
             cellHeight: 50,
             x: game.config.width-100,
@@ -168,7 +227,7 @@ class GameScene extends Phaser.Scene{
       goToSettings.on('pointerdown', () => { this.scene.start('SettingsScene'); });
       
       /*------------- Game objects --------------*/
-      this.target_score = 100;
+      //this.target_score = 100; use gameSettings instead
     }
     update(){
       // Update scores
@@ -198,7 +257,6 @@ class GameScene extends Phaser.Scene{
       this.player_scores[this.current_player] += this.turn_total;
       this.player_scores_text[this.current_player].setText('Total '+this.player_scores[this.current_player]);
       //Check for gameOver
-      console.log(this.player_scores[this.current_player]);
       if(this.player_scores[this.current_player] >= this.target_score){
         this.gameOver(this.current_player);
       } 
@@ -221,9 +279,9 @@ class GameOverScene extends Phaser.Scene{
         super('GameOverScene');
     }
     create(){
-        const goTo1 = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
-        goTo1.setInteractive();
-        goTo1.on('pointerdown', () => {
+        const GOTO_MENU = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
+        GOTO_MENU.setInteractive();
+        GOTO_MENU.on('pointerdown', () => {
           this.scene.start('MainMenuScene');
         });
 
@@ -246,7 +304,12 @@ var config = {
     settings: {
       volume: .75
     },
-    scene: [PreloadScene, MainMenuScene, SettingsScene, GameScene, GameOverScene]
+    scene: [PreloadScene, MainMenuScene, SettingsScene, PreGameScene, GameScene, GameOverScene]
+};
+
+var gameSettings = {
+  playerCount: 2,
+  targetScore: 100
 };
 
 var game = new Phaser.Game(config);
