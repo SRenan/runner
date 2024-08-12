@@ -227,7 +227,6 @@ class GameScene extends Phaser.Scene{
       goToSettings.on('pointerdown', () => { this.scene.start('SettingsScene'); });
       
       /*------------- Game objects --------------*/
-      //this.target_score = 100; use gameSettings instead
     }
     update(){
       // Update scores
@@ -257,7 +256,7 @@ class GameScene extends Phaser.Scene{
       this.player_scores[this.current_player] += this.turn_total;
       this.player_scores_text[this.current_player].setText('Total '+this.player_scores[this.current_player]);
       //Check for gameOver
-      if(this.player_scores[this.current_player] >= this.target_score){
+      if(this.player_scores[this.current_player] >= gameSettings.targetScore){
         this.gameOver(this.current_player);
       } 
       this.turn_total = 0;
@@ -269,7 +268,7 @@ class GameScene extends Phaser.Scene{
     gameOver(player_id){
       //Maybe push a scene that is half the screen to the front
       //Congrats text + summary
-      this.scene.start('GameOverScene');
+      this.scene.start('GameOverScene', {winner: this.current_player, winningScore: this.player_scores[this.current_player]});
     }
 }
 
@@ -278,14 +277,20 @@ class GameOverScene extends Phaser.Scene{
     constructor(){
         super('GameOverScene');
     }
+    init(data){
+      this.winner = data.winner+1;
+      this.winningScore = data.winningScore;
+
+    }
     create(){
         const GOTO_MENU = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
         GOTO_MENU.setInteractive();
         GOTO_MENU.on('pointerdown', () => {
           this.scene.start('MainMenuScene');
         });
-
         this.add.text(game.config.width/2, game.config.height/2-200, 'Con-gra-tu-layyyytion!').setOrigin(0.5, 0.5);
+        this.add.text(game.config.width/2, game.config.height/2, 'Player '+this.winner+
+          ' wins the game with a score of '+ this.winningScore+'!').setOrigin(0.5, 0.5);
     }
 }
 
