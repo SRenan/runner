@@ -5,7 +5,13 @@ class PreloadScene extends Phaser.Scene{
     }
     preload(){
         //this.load Images, Sprites, Sounds, 
-        this.load.audio('testBeep', 'assets/beep.ogg');
+        this.load.audio('testBeep', 'assets/sounds/beep.ogg');
+        this.load.audio('pig_idle1', 'assets/sounds/pig_idle.mp3');
+        this.load.audio('pig_idle2', 'assets/sounds/pig_idle2.mp3');
+        this.load.audio('pig_idle3', 'assets/sounds/pig_idle3.mp3');
+        this.load.audio('pig_idle4', 'assets/sounds/pig_idle4.mp3');
+        this.load.audio('pig_hit1', 'assets/sounds/pig_hit1.mp3');
+        this.load.audio('pig_hit2', 'assets/sounds/pig_hit2.mp3');
         this.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
 
         this.load.image('bomb', 'assets/bomb.png');
@@ -112,7 +118,8 @@ class PreGameScene extends Phaser.Scene{
                      "If a 1 is rolled, the total points for that turn is reset to 0 and it becomes the \n" +
                      "next player's turn. A player can choose to end their turn in order to preserve \n"+
                      "their current points and add it to their total.";
-    this.add.text(10, 10, this.rulesText)
+    this.add.text(10, 10, this.rulesText);
+    var textBox = scene.rexUI.add.textBox(config);
     /*------------------- Settings---------------*/
     this.add.text(game.config.width/2, 200, 'Player count:').setOrigin(0.5, 0.5);
     this.player_count = gameSettings.playerCount;
@@ -227,6 +234,7 @@ class GameScene extends Phaser.Scene{
       goToSettings.on('pointerdown', () => { this.scene.start('SettingsScene'); });
       
       /*------------- Game objects --------------*/
+      this.pigHit = this.sound.add('pig_hit1'); 
     }
     update(){
       // Update scores
@@ -240,8 +248,9 @@ class GameScene extends Phaser.Scene{
       this.dice_key = 'dice'+this.dice_value;
       this.main_dice.setTexture(this.dice_key);
       if(this.dice_value == 1){
+        this.pigHit.play({volume: config.settings.volume});
         this.turn_total = 0;
-         this.endTurn();
+        this.endTurn();
       } else{
         this.turn_total += this.dice_value;
       }
