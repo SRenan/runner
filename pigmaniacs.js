@@ -109,7 +109,7 @@ class PreGameScene extends Phaser.Scene{
       super('PreGameScene');
   }   
   preload(){
-    this.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
+    //this.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
   }   
   create(){
     this.rulesText = "RULES:\n" +
@@ -118,9 +118,23 @@ class PreGameScene extends Phaser.Scene{
                      "If a 1 is rolled, the total points for that turn is reset to 0 and it becomes the \n" +
                      "next player's turn. A player can choose to end their turn in order to preserve \n"+
                      "their current points and add it to their total.";
-    this.add.text(10, 10, this.rulesText);
-    var textBox = scene.rexUI.add.textBox(config);
+
     /*------------------- Settings---------------*/
+    this.target_score = gameSettings.targetScore;
+    this.add.text(game.config.width/2, 150, 'Target score:').setOrigin(0.5, 0.5);
+    this.player_count = gameSettings.playerCount;
+    const UP_TARGET_SCORE = this.add.text(game.config.width/2+100, 150, '+', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+    UP_TARGET_SCORE.setInteractive();
+    UP_TARGET_SCORE.on('pointerdown', () => {this.target_score = this.target_score +10;});
+    const DOWN_TARGET_SCORE = this.add.text(game.config.width/2+120, 150, '-', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+    DOWN_TARGET_SCORE.setInteractive();
+    DOWN_TARGET_SCORE.on('pointerdown', () => {
+      if(this.target_score > 20){
+        this.target_score = this.target_score -10;
+      }
+    });
+    this.targetScoreText = this.add.text(game.config.width/2+150, 150, this.target_score).setOrigin(0.5, 0.5);
+
     this.add.text(game.config.width/2, 200, 'Player count:').setOrigin(0.5, 0.5);
     this.player_count = gameSettings.playerCount;
     const UP_PLAYER_COUNT = this.add.text(game.config.width/2+100, 200, '+', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
@@ -135,20 +149,20 @@ class PreGameScene extends Phaser.Scene{
     });
     this.playerCountText = this.add.text(game.config.width/2+150, 200, this.player_count).setOrigin(0.5, 0.5);
 
-    this.target_score = gameSettings.targetScore;
-    this.add.text(game.config.width/2, 250, 'Target score:').setOrigin(0.5, 0.5);
-    this.player_count = gameSettings.playerCount;
-    const UP_TARGET_SCORE = this.add.text(game.config.width/2+100, 250, '+', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
-    UP_TARGET_SCORE.setInteractive();
-    UP_TARGET_SCORE.on('pointerdown', () => {this.target_score = this.target_score +10;});
-    const DOWN_TARGET_SCORE = this.add.text(game.config.width/2+120, 250, '-', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
-    DOWN_TARGET_SCORE.setInteractive();
-    DOWN_TARGET_SCORE.on('pointerdown', () => {
-      if(this.target_score > 20){
-        this.target_score = this.target_score -10;
+    this.add.text(game.config.width/2, 250, 'AI  count:').setOrigin(0.5, 0.5);
+    this.AI_count = gameSettings.aiCount;
+    const UP_AI_COUNT = this.add.text(game.config.width/2+100, 250, '+', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+    UP_AI_COUNT.setInteractive();
+    UP_AI_COUNT.on('pointerdown', () => {this.AI_count = this.AI_count +1;});
+    const DOWN_AI_COUNT = this.add.text(game.config.width/2+120, 250, '-', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+    DOWN_AI_COUNT.setInteractive();
+    DOWN_AI_COUNT.on('pointerdown', () => {
+      if(this.AI_count > 0){
+        this.AI_count = this.AI_count -1;
       }
     });
-    this.targetScoreText = this.add.text(game.config.width/2+150, 250, this.target_score).setOrigin(0.5, 0.5);
+    this.aiCountText = this.add.text(game.config.width/2+150, 250, this.AI_count).setOrigin(0.5, 0.5);
+
     const GOTO_GAME = this.add.text(game.config.width/2, 400, 'Start!', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
     GOTO_GAME.setInteractive();
     GOTO_GAME.on('pointerdown', () => {
@@ -158,8 +172,10 @@ class PreGameScene extends Phaser.Scene{
   update(){
     //Should I remove this and modify gameSettings directly in create?
     gameSettings.playerCount = this.player_count;
+    gameSettings.aiCount = this.AI_count;
     gameSettings.targetScore = this.target_score;
     this.playerCountText.setText(gameSettings.playerCount);
+    this.aiCountText.setText(gameSettings.aiCount);
     this.targetScoreText.setText(gameSettings.targetScore);
   }
 }
@@ -195,20 +211,28 @@ class GameScene extends Phaser.Scene{
       /*------------- Side panel --------------*/
       const gameUIpanel = this.add.rectangle(game.config.width-100, game.config.height/2, 200, game.config.height, 0xff0000, 0.5);
       const targetTextBox = this.add.rectangle(game.config.width-100, 30, 190, 50, 0x0000ff);
-      const targetText = this.add.text(game.config.width-100, 25, 'Target score: '+gameSettings.targetScore).setOrigin(0.5,0.5);//, { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:15}});
+      const targetText = this.add.text(game.config.width-100, 25, 'Target score: '+gameSettings.targetScore).setOrigin(0.5,0.5);
       // For each player
+      const NPLAYERS =  gameSettings.playerCount + gameSettings.aiCount;
       this.players = [];
+      this.player_types = [];
       this.player_scores = [];
       this.player_scores_text = [];
-      for (var i = 0; i < gameSettings.playerCount; i++){
+      for (var i = 0; i < NPLAYERS; i++){
         this.player_id = i+1
-        this.players.push(this.add.text(0, 0, 'Player '+this.player_id));
+        if(i < gameSettings.playerCount){
+          this.players.push(this.add.text(0, 0, 'Player '+this.player_id));
+          this.player_types.push('human');
+        } else{
+          this.players.push(this.add.text(0, 0, 'AI '+this.player_id));
+          this.player_types.push('AI');
+        }  
         this.player_scores.push(0);
         this.player_scores_text.push(this.add.text(0, 0, 'Total: '+0));
       }
       Phaser.Actions.GridAlign(this.players, {
             width: 1,
-            height: gameSettings.playerCount,
+            height: NPLAYERS,
             cellWidth: 50,
             cellHeight: 50,
             x: game.config.width-200,
@@ -216,7 +240,7 @@ class GameScene extends Phaser.Scene{
       });
       Phaser.Actions.GridAlign(this.player_scores_text, {
             width: 1,
-            height: gameSettings.playerCount,
+            height: NPLAYERS,
             cellWidth: 50,
             cellHeight: 50,
             x: game.config.width-100,
@@ -234,12 +258,15 @@ class GameScene extends Phaser.Scene{
       goToSettings.on('pointerdown', () => { this.scene.start('SettingsScene'); });
       
       /*------------- Game objects --------------*/
-      this.pigHit = this.sound.add('pig_hit1'); 
+      this.pigHit = this.sound.add('pig_hit1');
     }
     update(){
       // Update scores
       this.total_text.setText('Current total: '+this.turn_total);
       this.player_scores_text[this.current_player].setText('Total '+this.player_scores[this.current_player]);
+      if(this.player_types[this.current_player] == 'AI'){
+        this.aiPlay();
+      }
     }
 
     // Other methods
@@ -278,6 +305,15 @@ class GameScene extends Phaser.Scene{
       //Maybe push a scene that is half the screen to the front
       //Congrats text + summary
       this.scene.start('GameOverScene', {winner: this.current_player, winningScore: this.player_scores[this.current_player]});
+    }
+
+    aiPlay(){
+      this.roll = Phaser.Math.Between(0, 1);
+      if(this.roll == 1 | this.turn_total == 0){
+        this.rollDice();
+      } else{
+        this.endTurn();
+      }
     }
 }
 
@@ -323,6 +359,7 @@ var config = {
 
 var gameSettings = {
   playerCount: 2,
+  aiCount: 0,
   targetScore: 100
 };
 
