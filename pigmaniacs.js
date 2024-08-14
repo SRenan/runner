@@ -24,6 +24,11 @@ class PreloadScene extends Phaser.Scene{
         this.load.image('dice4', 'assets/diceFour.png');
         this.load.image('dice5', 'assets/diceFive.png');
         this.load.image('dice6', 'assets/diceSix.png');
+
+        this.load.spritesheet('rollsheet',
+          'assets/dice_96px_16.png',
+          { frameWidth: 96, frameHeight: 96 }
+      );
     }
     create(){
         //Check whether we have a previous run (This should likely wrapped into one big variable if there is more to save)
@@ -118,6 +123,7 @@ class PreGameScene extends Phaser.Scene{
                      "If a 1 is rolled, the total points for that turn is reset to 0 and it becomes the \n" +
                      "next player's turn. A player can choose to end their turn in order to preserve \n"+
                      "their current points and add it to their total.";
+    this.add.text(10, 10, this.rulesText);
 
     /*------------------- Settings---------------*/
     this.target_score = gameSettings.targetScore;
@@ -187,13 +193,25 @@ class GameScene extends Phaser.Scene{
     }
     create(){
       this.bg = this.add.image(400, 300, 'pigs_game_bg');
+      this.anims.create({
+        key: 'roll',
+        frames: this.anims.generateFrameNumbers('rollsheet', { start: 1, end: 15}),
+        frameRate: 30,
+        repeat: 0
+    });
 
       /*------------- Game area ---------------*/
       this.turn_count = 0;
       this.turn_total = 0;
       this.total_text = this.add.text(50, 100, 'Current total: '+this.turn_total, { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:20, y:20}});
 
+      this.dice_key = 'dice1';
       this.main_dice = this.add.sprite(game.config.width/2, game.config.height/2, 'dice1');
+      this.main_dice.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        this.main_dice.setTexture(this.dice_key);
+        console.log("Anim finished");
+      }, this);
+
       const rollButton = this.add.text(game.config.width/2, game.config.height/2+200, 'ROLL!', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:20, y:20}}).setOrigin(0.5, 0.5);
       rollButton.setInteractive();
       rollButton.on('pointerdown', () => {
@@ -271,8 +289,10 @@ class GameScene extends Phaser.Scene{
 
     // Other methods
     rollDice(){
+      this.main_dice.anims.play('roll', true);
       this.dice_value = Phaser.Math.Between(1, 6);
       this.dice_key = 'dice'+this.dice_value;
+
       this.main_dice.setTexture(this.dice_key);
       if(this.dice_value == 1){
         this.pigHit.play({volume: config.settings.volume});
