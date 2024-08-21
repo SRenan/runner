@@ -17,6 +17,7 @@ class PreloadScene extends Phaser.Scene{
         this.load.image('bomb', 'assets/bomb.png');
         this.load.image('pigs_menu_bg', 'assets/pigs_menu_bg.jpeg');
         this.load.image('pigs_game_bg', 'assets/pigs_game_bg.jpeg');
+        this.load.image('red_bg', 'assets/red_bg.png');
 
         this.load.image('dice1', 'assets/diceOne.png');
         this.load.image('dice2', 'assets/diceTwo.png');
@@ -48,6 +49,7 @@ class MainMenuScene extends Phaser.Scene{
     }
     preload(){}
     create(){
+      currentScene = this.scene.key;
       this.bg = this.add.image(400, 300, 'pigs_menu_bg');
       const goTo2 = this.add.text(game.config.width/2, 200, 'Game', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
       goTo2.setInteractive();
@@ -57,7 +59,7 @@ class MainMenuScene extends Phaser.Scene{
       const goToSettings = this.add.text(game.config.width/2, 300, 'Settings', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
       goToSettings.setInteractive();
       goToSettings.on('pointerdown', () => {
-        this.scene.start('SettingsScene');
+        this.scene.launch('SettingsScene');
       });
       const exitbutton = this.add.text(game.config.width/2, 400, 'Exit', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
       exitbutton.setInteractive();
@@ -76,13 +78,19 @@ class SettingsScene extends Phaser.Scene{
         this.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
     }   
     create(){
+      this.bg = this.add.image(400, 300, 'red_bg');
+
+      const BACK_BUTTON = this.add.text(game.config.width/2, 150, 'Back', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
+      BACK_BUTTON.setInteractive()
+      BACK_BUTTON.on('pointerdown', () => {
+        console.log(currentScene);
+        this.scene.stop();
+        this.scene.resume(currentScene);
+      }); 
+      /*----------- Volume ---------------*/
         this.volumeTestSound = this.sound.add('testBeep'); 
 
-        const goToMenu = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' }); 
-        goToMenu.setInteractive();
-        goToMenu.on('pointerdown', () => {
-          this.scene.start('MainMenuScene');
-        }); 
+        
         const COLOR_PRIMARY = 0x4e342e;
         const COLOR_LIGHT = 0x7b5e57;
         const COLOR_DARK = 0x260e04;
@@ -117,6 +125,7 @@ class PreGameScene extends Phaser.Scene{
     //this.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
   }   
   create(){
+    currentScene = this.scene.key;
     this.rulesText = "RULES:\n" +
                      "Welcome to a game of pig. The goal is to be the first to reach the target score.\n" +
                      "On each player turn, points are earned by rolling a die and summing the total.\n" +
@@ -188,10 +197,12 @@ class PreGameScene extends Phaser.Scene{
 class GameScene extends Phaser.Scene{
     constructor(){
         super('GameScene');
+        this.AItimer = 0;
     }
     preload(){
     }
     create(){
+      currentScene = this.scene.key;
       this.bg = this.add.image(400, 300, 'pigs_game_bg');
       this.anims.create({
         key: 'roll',
@@ -209,7 +220,6 @@ class GameScene extends Phaser.Scene{
       this.main_dice = this.add.sprite(game.config.width/2, game.config.height/2, 'dice1');
       this.main_dice.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
         this.main_dice.setTexture(this.dice_key);
-        console.log("Anim finished");
       }, this);
 
       const rollButton = this.add.text(game.config.width/2, game.config.height/2+200, 'ROLL!', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:20, y:20}}).setOrigin(0.5, 0.5);
@@ -273,17 +283,22 @@ class GameScene extends Phaser.Scene{
       // Settings
       const goToSettings = this.add.text(game.config.width-100, game.config.height-150, 'Settings', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);
       goToSettings.setInteractive();
-      goToSettings.on('pointerdown', () => { this.scene.start('SettingsScene'); });
+      goToSettings.on('pointerdown', () => {
+        this.scene.pause(); 
+        this.scene.launch('SettingsScene'); 
+      });
       
       /*------------- Game objects --------------*/
       this.pigHit = this.sound.add('pig_hit1');
     }
-    update(){
+    update(time, delta){
+      this.AItimer += delta;
       // Update scores
       this.total_text.setText('Current total: '+this.turn_total);
       this.player_scores_text[this.current_player].setText('Total '+this.player_scores[this.current_player]);
-      if(this.player_types[this.current_player] == 'AI'){
+      if(this.player_types[this.current_player] == 'AI' && this.AItimer >= 1000){
         this.aiPlay();
+        this.AItimer = 0
       }
     }
 
@@ -348,6 +363,7 @@ class GameOverScene extends Phaser.Scene{
 
     }
     create(){
+      currentScene = this.scene.key;
         const GOTO_MENU = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
         GOTO_MENU.setInteractive();
         GOTO_MENU.on('pointerdown', () => {
@@ -358,6 +374,8 @@ class GameOverScene extends Phaser.Scene{
           ' wins the game with a score of '+ this.winningScore+'!').setOrigin(0.5, 0.5);
     }
 }
+
+var currentScene = "PreloadScene";
 
 var config = {
     type: Phaser.AUTO,
@@ -374,7 +392,7 @@ var config = {
     settings: {
       volume: .75
     },
-    scene: [PreloadScene, MainMenuScene, SettingsScene, PreGameScene, GameScene, GameOverScene]
+    scene: [PreloadScene, MainMenuScene, PreGameScene, GameScene, GameOverScene, SettingsScene]
 };
 
 var gameSettings = {
