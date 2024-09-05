@@ -360,18 +360,17 @@ class GameOverScene extends Phaser.Scene{
     init(data){
       this.winner = data.winner+1;
       this.winningScore = data.winningScore;
-
     }
     create(){
       currentScene = this.scene.key;
-        const GOTO_MENU = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
-        GOTO_MENU.setInteractive();
-        GOTO_MENU.on('pointerdown', () => {
-          this.scene.start('MainMenuScene');
-        });
-        this.add.text(game.config.width/2, game.config.height/2-200, 'Con-gra-tu-layyyytion!').setOrigin(0.5, 0.5);
-        this.add.text(game.config.width/2, game.config.height/2, 'Player '+this.winner+
-          ' wins the game with a score of '+ this.winningScore+'!').setOrigin(0.5, 0.5);
+      const GOTO_MENU = this.add.text(0, 0, 'Go to Menu', { fill: '#2e2d8c' });
+      GOTO_MENU.setInteractive();
+      GOTO_MENU.on('pointerdown', () => {
+        this.scene.start('MainMenuScene');
+      });
+      this.add.text(game.config.width/2, game.config.height/2-200, 'Con-gra-tu-layyyytion!').setOrigin(0.5, 0.5);
+      this.add.text(game.config.width/2, game.config.height/2, 'Player '+this.winner+
+        ' wins the game with a score of '+ this.winningScore+'!').setOrigin(0.5, 0.5);
     }
 }
 
