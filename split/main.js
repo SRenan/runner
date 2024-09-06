@@ -13,4 +13,9 @@ var config = {
     scene: [Scene1]
 };
 
+var main_variable = {
+    count: 0,
+    score: 100
+}
+
 var game = new Phaser.Game(config);
