@@ -238,7 +238,7 @@ class GameScene extends Phaser.Scene{
 
       /*------------- Side panel --------------*/
       const gameUIpanel = this.add.rectangle(game.config.width-100, game.config.height/2, 200, game.config.height, 0xff0000, 0.5);
-      const targetTextBox = this.add.rectangle(game.config.width-100, 30, 190, 50, 0x0000ff);
+      const targetTextBox = this.add.rectangle(game.config.width-100, 30, 190, 50, 0x000000);
       const targetText = this.add.text(game.config.width-100, 25, 'Target score: '+gameSettings.targetScore).setOrigin(0.5,0.5);
       // For each player
       const NPLAYERS =  gameSettings.playerCount + gameSettings.aiCount;
@@ -351,7 +351,6 @@ class GameScene extends Phaser.Scene{
       }
     }
 }
-
 class GameOverScene extends Phaser.Scene{
     //Summary of game and return to MainMenuScene
     constructor(){
@@ -373,31 +372,3 @@ class GameOverScene extends Phaser.Scene{
         ' wins the game with a score of '+ this.winningScore+'!').setOrigin(0.5, 0.5);
     }
 }
-
-var currentScene = "PreloadScene";
-
-var config = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    backgroundColor: '#ADD8E6',
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: {y: 300},
-            debug: false
-        }
-    },
-    settings: {
-      volume: .75
-    },
-    scene: [PreloadScene, MainMenuScene, PreGameScene, GameScene, GameOverScene, SettingsScene]
-};
-
-var gameSettings = {
-  playerCount: 2,
-  aiCount: 0,
-  targetScore: 100
-};
-
-var game = new Phaser.Game(config);

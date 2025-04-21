@@ -1,9 +1,3 @@
-/* 
-This is a good starting point for any phaser project
-- PreloadScene: To load all assets and automatically transition to MainMenu
-- MainMenuScene: Landing page, allows to start game
-- GameScene: Main game scene
-*/
 class PreloadScene extends Phaser.Scene{
     //Preload everything then automatically transition to the MainMenuScene
     constructor(){
@@ -26,7 +20,7 @@ class MainMenuScene extends Phaser.Scene{
     }
     preload(){}
     create(){
-      const goTo2 = this.add.text(100, 100, 'Game', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}});
+      const goTo2 = this.add.text(config.width/2, 100, 'Race', { fill: '#2e2d8c', backgroundColor: '#fcfdff', padding: {x:10, y:10}}).setOrigin(0.5, 0.5);;
       goTo2.setInteractive();
       goTo2.on('pointerdown', () => {
         this.scene.start('GameScene');

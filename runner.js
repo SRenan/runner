@@ -8,7 +8,7 @@ class PreloadScene extends Phaser.Scene{
         super('PreloadScene');
     }
     preload(){
-        this.load.audio('testBeep', 'assets/beep.ogg');
+        this.load.audio('testBeep', 'assets/sounds/beep.ogg');
 
         this.load.image('sky', 'assets/sky.png');
         this.load.image('sky2', "assets/sky2.png");
@@ -25,6 +25,11 @@ class PreloadScene extends Phaser.Scene{
         );
         this.load.image('dude1', 'assets/star.png');
         this.load.image('dude2', 'assets/bomb.png');
+
+        this.load.spritesheet('platform_atlas',
+            'assets/atlas/Tilesheet/platformPack_tilesheet.png',
+            { frameWidth: 64, frameHeight: 64 }
+        )
 
         this.load.scenePlugin('rexuiplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexuiplugin.min.js', 'rexUI', 'rexUI');
 
@@ -128,7 +133,8 @@ class SettingsScene extends Phaser.Scene{
 class RunScene extends Phaser.Scene{
     constructor(){
         super('RunScene');
-        this.timer = 0;
+        this.bombTimer = 0;
+        this.groundTimer = 0;
     }
     preload(){}
     create(){
@@ -139,9 +145,14 @@ class RunScene extends Phaser.Scene{
             .setOrigin(0)
             .setScrollFactor(0, 1); //this line keeps your background from scrolling outside of camera bounds
         //"this" required for every variable in the class
+        // ground should be entirely replaced by the groundTiles but there's something wonky with physic of dynamic groups
         this.ground = this.physics.add.staticGroup();
         this.ground.create(400, 568, 'ground').setScale(2).refreshBody();
         this.platforms = this.physics.add.group({immovable: true, allowGravity: false});
+
+        /*---------------------------- Moving ground ------------------*/
+        this.groundTiles = this.physics.add.group({immovable: true, allowGravity: false});
+
 
         this.player = this.physics.add.sprite(100, 450, player_config.sprite_key);
         this.player.setBounce(0.2);
@@ -184,6 +195,9 @@ class RunScene extends Phaser.Scene{
         this.physics.add.collider(this.player, this.ground);
         this.physics.add.collider(this.stars,  this.ground);
         this.physics.add.collider(this.bombs,  this.ground);
+        this.physics.add.collider(this.player, this.groundTiles);
+        this.physics.add.collider(this.stars,  this.groundTiles);
+        this.physics.add.collider(this.bombs,  this.groundTiles);
         this.physics.add.collider(this.player, this.platforms);
         this.physics.add.collider(this.stars,  this.platforms);
         this.physics.add.collider(this.bombs,  this.platforms);
@@ -213,11 +227,16 @@ class RunScene extends Phaser.Scene{
         this.moneyText.setScrollFactor(0);
 
         this.paused = false;
+        this.dead = false; //Only play run animation if alive
     }
     update(time, delta){
-        this.player.anims.play('right', true);
+        if(!this.dead){
+            this.player.anims.play('right', true);
+            this.background.tilePositionX += 1;
+        }
+        
         //this.background.setTilePosition(100);
-        this.background.tilePositionX += 1;
+
 
         /*-------------------- Controls --------------------*/
         if (this.cursors.up.isDown && this.player.body.touching.down){
@@ -236,11 +255,16 @@ class RunScene extends Phaser.Scene{
         }
         
         /*-------------------- Timers --------------------*/
-        this.timer += delta;
-        if(this.timer >= 3000){
+        this.bombTimer += delta;
+        this.groundTimer += delta;
+        if(this.bombTimer >= 3000){
             this.createBomb();
             this.createPlatform();
-            this.timer = 0;
+            this.bombTimer = 0;
+        }
+        if(this.groundTimer >= 300){ //TODO: Find a way to make non-overlapping continuous tiles that does not depend on FPS
+            this.createGroundTiles();
+            this.groundTimer = 0;
         }
     }
     createBomb(){
@@ -250,7 +274,12 @@ class RunScene extends Phaser.Scene{
     createPlatform(){
         const randY = Phaser.Math.Between(20, 50)*10;
         const platform = this.platforms.create(1000, randY, 'ground');
-        platform.setVelocityX(-100);
+        platform.setVelocityX(-200);
+    }
+    createGroundTiles(){
+        const tileIndex = Phaser.Math.Between(0,3);
+        const groundTile = this.groundTiles.create(game.config.width+64, config.height-32, 'platform_atlas', tileIndex);
+        groundTile.setVelocityX(-200);
     }
     collectStar(player, star){
         //star.disableBody(true, true);
@@ -259,9 +288,10 @@ class RunScene extends Phaser.Scene{
         this.moneyText.setText('$$: ' + this.money);
     }
     hitBomb(player, bomb){
+        this.dead = true;
+        player.anims.play('turn');
         this.physics.pause();
         player.setTint(0xff0000);
-        player.anims.play('turn');
         this.gameOver();
     }
     gameOver(){
